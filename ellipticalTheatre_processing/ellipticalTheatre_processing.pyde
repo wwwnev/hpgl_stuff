@@ -1,19 +1,5 @@
-# Simulates the irregular sound reflection in an eliptical theatre from Carl Ferdinand Langhans (1810)
-
 from math import tan, atan, radians, sqrt, degrees
 import random
-
-#hpgl stuff for exporting the simulation later
-
-X_MIN = 0
-Y_MIN = 0
-_11x17 = True
-if _11x17:
-    X_MAX = 16640
-    Y_MAX = 10365
-else:
-    X_MAX = 10365
-    Y_MAX = 7692
 
 TOL = 0.0001
 
@@ -115,6 +101,28 @@ v = vects[2]
 while(v.bounce):
     collision_line_ellipse(v,e_param)
 
-#print(v.coordinates)
+print(v.coordinates)
 
-list(map(lambda x: ((x[0]+1)*500,(x[1]+1)*500), v.coordinates))
+def setup():
+    size(1000, 1000)
+    stroke(255)
+    noFill()
+
+
+def draw():
+    background(0)
+    old = 0
+    new = 1
+    
+    scaled_v = list(map(lambda x: ((x[0]+1)*50,(x[1]+1)*50), v.coordinates))
+    print(v.coordinates)
+    print(scaled_v)
+    l = len(v.coordinates)
+    while new < l:
+        line(scaled_v[old][0],scaled_v[old][1],scaled_v[new][0],scaled_v[new][1])
+        new+=1
+        old+=1
+    
+    line(0,500,1000,500)
+        
+        
