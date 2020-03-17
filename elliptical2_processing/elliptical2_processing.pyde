@@ -1,4 +1,4 @@
-from math import tan, atan, radians, sqrt, degrees
+from math import cos, sin, tan, atan, radians, sqrt, degrees
 import random
 
 TOL = 0.0001
@@ -98,13 +98,15 @@ def collision_line_ellipse(v, e):
         y1 = m*x1 + c
 
     # ellipse's tangent angle at x1,y1
-    if y1 == 0:
+    print(x1,y1)
+    if y1 == 500:
         theta_tang = radians(90)
-    elif x1 == 0:
+    elif x1 == 500:
         theta_tang = radians(0)
     else:
-        theta_tang = atan(-b**2*x1/(a**2*y1))
-
+        #theta_tang = atan(-b**2*x1/(a**2*y1))
+        theta_tang = atan(-b*cos(cangle)/(a*sin(cangle)))
+        
     # new angle of sound vector
     #print (degrees(2*theta_tang - cangle))
     #print (degrees((2*theta_tang - cangle) % radians(360)))
@@ -143,7 +145,7 @@ el = Ellipse(500,500,400,300)
 
 #vects = [Sound_vector((264.5751311,500), theta) for theta in range(0,360,15)]
 
-vects = [Sound_vector((264.5751311,500), theta) for theta in [8]]
+vects = [Sound_vector((260,500), theta) for theta in [91]]
 
 #print(sv1.coordinates)
 
@@ -160,7 +162,7 @@ def setup():
 
 def draw():
     line(0,0,1000,1000)
-    if frameCount >= 3: noLoop()
+    if frameCount >= 1: noLoop()
     background(0)
     el.draw_it()
     for v in vects:
