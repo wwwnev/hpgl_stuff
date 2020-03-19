@@ -44,6 +44,8 @@ class Ellipse():
         return (self.x,self.y,self.a,self.b)
     def draw_it(self):
         ellipse(self.x,self.y, 2*self.a, 2*self.b)
+    def is_inside(self,x1,y1):
+        return (float(x1)-self.x)**2/self.a**2 + (float(y1)-self.y)**2/self.b**2 < 1
         
 def collision_line_ellipse(v, e):
     if not(v.bounce) : return
@@ -78,7 +80,7 @@ def collision_line_ellipse(v, e):
         x1 = x0
 
     else:
-        if cangle > 0 and cangle < radians(180): dir = 1
+        if cangle > radians(270) or cangle < radians(90): dir = 1
 
         # y = mx + c, is linear function
         m = tan(cangle)
@@ -98,14 +100,17 @@ def collision_line_ellipse(v, e):
         y1 = m*x1 + c
 
     # ellipse's tangent angle at x1,y1
-    print(x1,y1)
+    #print(x1,y1)
     if y1 == 500:
         theta_tang = radians(90)
     elif x1 == 500:
         theta_tang = radians(0)
     else:
         #theta_tang = atan(-b**2*x1/(a**2*y1))
-        theta_tang = atan(-b*cos(cangle)/(a*sin(cangle)))
+        #theta_tang = atan(-b*cos(cangle)/a/sin(cangle)) % radians(180)
+        
+        el_angle = atan((y1-500)/(x1-500))
+        theta_tang = atan(-b*cos(el_angle)/a/sin(el_angle)) % radians(180)
         
     # new angle of sound vector
     #print (degrees(2*theta_tang - cangle))
@@ -119,7 +124,7 @@ def collision_line_ellipse(v, e):
     #if random.random() > 0.9: v.bounce = False
 
 def collision_line_vline(v, x1, el):
-    print(not(v.bounce), v.get_cur_coord()[0], degrees(v.angle))
+    #print(not(v.bounce), v.get_cur_coord()[0], degrees(v.angle))
     
     if not(v.bounce) or v.get_cur_coord()[0] <= 500 or degrees(v.angle) < 90 or degrees(v.angle) > 270 : return
     
@@ -132,7 +137,7 @@ def collision_line_vline(v, x1, el):
     y1 = tan(cangle) * (x1-x0) + y0
     
     if ymin <= y1 <= ymax:
-        print("mid stop ", x1, y1) 
+        #print("mid stop ", x1, y1) 
         v.add_coord((x1,y1))
         v.stop_bounce()
     else: return
@@ -143,16 +148,15 @@ el = Ellipse(500,500,400,300)
 
 #sv1 = Sound_vector((200,400), 0)
 
-#vects = [Sound_vector((264.5751311,500), theta) for theta in range(0,360,15)]
-
-vects = [Sound_vector((260,500), theta) for theta in [91]]
+vects = [Sound_vector((264.5751311,500), theta) for theta in range(0,360,15)]
+#vects = [Sound_vector((75,500), theta) for theta in range(0,360,15)]
+t = 0
+#vects = [Sound_vector((260,500), theta) for theta in [95]]
 
 #print(sv1.coordinates)
 
 #vertical line defined by its x value
 v_line = 500
-
-
 
 def setup():
     size(1000, 1000)
@@ -161,12 +165,28 @@ def setup():
     
 
 def draw():
-    line(0,0,1000,1000)
-    if frameCount >= 1: noLoop()
+    global t
+    t+=1
+    #line(0,0,1000,1000)
+    
+    #if t >= 5: noLoop()
     background(0)
-    el.draw_it()
+    #el.draw_it()
     for v in vects:
-        collision_line_vline(v,v_line,el)
-        collision_line_ellipse(v,el)
+        while(v.bounce):
+            collision_line_vline(v,v_line,el)
+            collision_line_ellipse(v,el)
         v.draw_it()
-    line(v_line,800,v_line,200)
+
+    #line(v_line,800,v_line,200)
+    
+def mouseMoved():
+    global vects
+    if el.is_inside(mouseX,mouseY):
+        print("TWASDO",mouseX,mouseY)
+        vects = [Sound_vector((mouseX,mouseY), theta) for theta in range(0,360,15)]
+        
+        #for v in vects:
+         #   while v.bounce:
+          #      collision_line_vline(v,v_line,el)
+           #     collision_line_ellipse(v,el)
