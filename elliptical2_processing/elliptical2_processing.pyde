@@ -1,7 +1,7 @@
 from math import cos, sin, tan, atan, radians, sqrt, degrees
 import random
 
-TOL = 0.0001
+TOL = 0.00001
 
 def almost_equal(x,y):
     return abs(x-y) < TOL
@@ -45,7 +45,7 @@ class Ellipse():
     def draw_it(self):
         ellipse(self.x,self.y, 2*self.a, 2*self.b)
     def is_inside(self,x1,y1):
-        return (float(x1)-self.x)**2/self.a**2 + (float(y1)-self.y)**2/self.b**2 < 1
+        return (float(x1)-self.x)**2/self.a**2 + (float(y1)-self.y)**2/self.b**2 < 0.78
         
 def collision_line_ellipse(v, e):
     if not(v.bounce) : return
@@ -53,10 +53,8 @@ def collision_line_ellipse(v, e):
     (x0,y0) = v.get_cur_coord()
     cangle = v.angle
     (h,k,a,b) = e.get_params()
-    #print(h,k,a,b)
-    #print(x0,y0,degrees(cangle), "\n")
 
-    # dir = 1 if vector looks up, -1 otherwise
+    # dir = 1 if vector looks up, -1 otherwise (or something like that)
     dir = -1
 
     #horizontal line
@@ -95,67 +93,54 @@ def collision_line_ellipse(v, e):
         x1 = (b**2*h - a**2*m*phi + dir * a*b*sqrt(b**2 + (a*m)**2 - 2*m*phi*h - phi**2 - (m*h)**2)) / (b**2 + (a*m)**2)
         x1_alt = (b**2*h - a**2*m*phi - dir * a*b*sqrt(b**2 + (a*m)**2 - 2*m*phi*h - phi**2 - (m*h)**2)) / (b**2 + (a*m)**2)
         if almost_equal(x0,x1): 
-            #print("ALMOST EQUAL HAPPENED !!")
+            print("ALMOST EQUAL HAPPENED !!")
             x1 = x1_alt
         y1 = m*x1 + c
 
     # ellipse's tangent angle at x1,y1
-    #print(x1,y1)
     if y1 == 500:
         theta_tang = radians(90)
     elif x1 == 500:
         theta_tang = radians(0)
     else:
-        #theta_tang = atan(-b**2*x1/(a**2*y1))
-        #theta_tang = atan(-b*cos(cangle)/a/sin(cangle)) % radians(180)
-        
+        # angle from center of ellipse to point on ellipse
         el_angle = atan((y1-500)/(x1-500))
+        # angle of the tangent at said point of ellipse
         theta_tang = atan(-b*cos(el_angle)/a/sin(el_angle)) % radians(180)
         
     # new angle of sound vector
-    #print (degrees(2*theta_tang - cangle))
-    #print (degrees((2*theta_tang - cangle) % radians(360)))
     nangle = (2*theta_tang - cangle) % radians(360)
 
     # updating the Sound_vector v
     v.add_coord((x1,y1))
     v.angle = nangle
 
-    #if random.random() > 0.9: v.bounce = False
-
+# TODO adjust ymin and ymax in case the wall isnt directly in the middle of the ellipse
 def collision_line_vline(v, x1, el):
-    #print(not(v.bounce), v.get_cur_coord()[0], degrees(v.angle))
-    
     if not(v.bounce) or v.get_cur_coord()[0] <= 500 or degrees(v.angle) < 90 or degrees(v.angle) > 270 : return
-    
     
     (x0,y0) = v.get_cur_coord()
     cangle = v.angle
     ymin = el.y - el.b
     ymax = el.y + el.b
     
+    #projected y value when hitting wall
     y1 = tan(cangle) * (x1-x0) + y0
     
+    # hits the absorbtion wall INSIDE the ellipse
     if ymin <= y1 <= ymax:
-        #print("mid stop ", x1, y1) 
         v.add_coord((x1,y1))
         v.stop_bounce()
     else: return
         
     
-
+# the theatre boundaries
 el = Ellipse(500,500,400,300)
 
-#sv1 = Sound_vector((200,400), 0)
+# sound vectors
+vects = [Sound_vector((240,500), theta) for theta in range(0,360,15)]
 
-vects = [Sound_vector((264.5751311,500), theta) for theta in range(0,360,15)]
-#vects = [Sound_vector((75,500), theta) for theta in range(0,360,15)]
-t = 0
-#vects = [Sound_vector((260,500), theta) for theta in [95]]
-
-#print(sv1.coordinates)
-
-#vertical line defined by its x value
+# vertical line defined by its x value, it's the wall that absorbs sound
 v_line = 500
 
 def setup():
@@ -163,30 +148,29 @@ def setup():
     stroke(255)
     noFill()
     
-
 def draw():
-    global t
-    t+=1
-    #line(0,0,1000,1000)
-    
-    #if t >= 5: noLoop()
+    #global t
+    #t+=1
+    #if t >= 6: noLoop()
     background(0)
-    #el.draw_it()
+    stroke(255,255,255,100)
+    el.draw_it()
+    stroke(255,255,255,120)
     for v in vects:
-        while(v.bounce):
-            collision_line_vline(v,v_line,el)
-            collision_line_ellipse(v,el)
+        #collision_line_vline(v,v_line,el)
+        #collision_line_ellipse(v,el)
         v.draw_it()
-
-    #line(v_line,800,v_line,200)
+    saveFrame("ellipticalTheatre-#####.png")
     
 def mouseMoved():
     global vects
     if el.is_inside(mouseX,mouseY):
         print("TWASDO",mouseX,mouseY)
         vects = [Sound_vector((mouseX,mouseY), theta) for theta in range(0,360,15)]
-        
-        #for v in vects:
-         #   while v.bounce:
-          #      collision_line_vline(v,v_line,el)
-           #     collision_line_ellipse(v,el)
+        for v in vects:
+            #it should never take more than stpr bounce to stop, if we get there, theres and infinite loop (TODO)
+            stpr = 0
+            while v.bounce and stpr < 10:
+                stpr += 1
+                collision_line_vline(v,v_line,el)
+                collision_line_ellipse(v,el)
